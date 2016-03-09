@@ -1,0 +1,53 @@
+
+usage()
+{
+  echo 
+  echo "Environment Variables"
+  echo "  TYPE: SOA, A, TXT, NS, CNAME, MX, PTR, SRV, SPF, AAAA (Default CNAME)"
+  echo "  HOST_TYPE: local-hostname, local-ipv4, public-ipv4, public-hostname (Default public-hostname)"
+  echo "  TTL: Integer (Default 60)"
+  echo "  ZONE_ID: Required"
+  echo "Docs - http://docs.aws.amazon.com/cli/latest/reference/route53/change-resource-record-sets.html"
+}
+
+run()
+{
+  METADATA_URL="http://169.254.169.254/latest/meta-data/"
+  HOST_TYPE=${HOST_TYPE:-"public-hostname"}
+  TYPE=${TYPE:-"CNAME"}
+  TTL=${TTL:-60}
+
+  if [ -z "$ZONE_ID" ]; then 
+    echo 'ZONE_ID must be set'; 
+    exit 1 
+  fi
+
+  HOST_ENTRY=$(curl --fail ${METADATA_URL}${HOST_TYPE} 2> /dev/null)
+
+  cat > /tmp/dns-batch <<- EOF 
+  {
+    "Changes": [
+      {
+        "Action": "UPSERT",
+        "ResourceRecordSet": {
+          "Name": "${NAME}",
+          "Type": "${TYPE}",
+          "TTL": ${TTL},
+          "ResourceRecords": [
+            {
+              "Value": "${HOST_ENTRY}"
+            }
+          ]
+        }
+      }
+    ]
+  }
+EOF
+
+  aws route53 change-resource-record-sets --hosted-zone-id ${ZONE_ID} \
+  --change-batch file:///tmp/dns-batch
+}
+
+"$@"
+
+

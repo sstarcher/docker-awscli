@@ -8,6 +8,9 @@ RUN \
 	apk --purge -v del py-pip && \
 	rm /var/cache/apk/*
 
-ADD aws-helpers /usr/bin/aws-helpers
-WORKDIR /aws
-CMD ["aws"]
+COPY entry /usr/bin/entry
+COPY tools/* /usr/bin/tools/
+
+ENTRYPOINT ["/usr/bin/entry"]
+CMD ["help"]
+

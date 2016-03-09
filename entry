@@ -1,0 +1,14 @@
+#! /bin/bash
+set -ea
+
+if [ "$1" == "help" ]; then
+    echo 'Commands'
+    ls /usr/bin/tools/
+    exit 1
+else
+    if . /usr/bin/tools/${1} run; then
+        echo 'Done'
+    else
+        . /usr/bin/tools/${1} usage
+    fi
+fi
