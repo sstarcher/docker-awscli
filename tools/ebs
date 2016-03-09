@@ -1,6 +1,4 @@
-
-usage()
-{
+usage(){
   echo 
   echo "Environment Variables"
   echo "  DEVICE_ID: Block device mapping (Default /dev/xvdf)"
@@ -9,18 +7,17 @@ usage()
 }
 
 
-attached-instance()
+attached_instance()
 {
   aws ec2 describe-volumes --volume-id ${VOLUME_ID} --query 'Volumes[].Attachments[].InstanceId' --output text
 }
 
-volume-state()
+volume_state()
 {
   aws ec2 describe-volumes --volume-id ${VOLUME_ID} --query 'Volumes[].State' --output text
 }
 
-run()
-{
+run(){
   METADATA_URL='http://169.254.169.254/latest/meta-data/'
   DEVICE_ID=${DEVICE_ID:-'/dev/xvdf'}
   export AWS_DEFAULT_REGION=$(curl -s --fail http://169.254.169.254/latest/dynamic/instance-identity/document | awk -F\" '/region/ {print $4}')
@@ -31,11 +28,11 @@ run()
   fi
 
   INSTANCE=$(curl --fail ${METADATA_URL}instance-id 2> /dev/null)
-  if [[ $(volume-state) == 'available' ]]; then
+  if [[ $(volume_state) == 'available' ]]; then
     aws ec2 attach-volume --instance-id ${INSTANCE}  --device ${DEVICE_ID} --volume-id ${VOLUME_ID} > /dev/null
-    while [ $(volume-state) != 'in-use' ]; do sleep 1; done
+    while [ $(volume_state) != 'in-use' ]; do sleep 1; done
   else
-    ATTACHED_INSTANCE=$(attached-instance)
+    ATTACHED_INSTANCE=$(attached_instance)
     if [[ "$ATTACHED_INSTANCE" == "$INSTANCE" ]]; then
       echo 'Volume is already attached to this instance'
       exit 0
