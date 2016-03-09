@@ -6,9 +6,15 @@ if [ "$1" == "help" ]; then
     ls /usr/bin/tools/
     exit 1
 else
-    if . /usr/bin/tools/${1} run; then
+    COMMAND=$1
+    shift
+
+    if [ "$1" == "help" ]; then
+        echo "Usage for ${COMMAND}"
+        . /usr/bin/tools/${COMMAND} usage
+    elif . /usr/bin/tools/${COMMAND} run; then
         echo 'Done'
     else
-        . /usr/bin/tools/${1} usage
+        . /usr/bin/tools/${COMMAND} usage
     fi
 fi
