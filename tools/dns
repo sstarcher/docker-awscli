@@ -6,6 +6,7 @@ usage()
   echo "  TYPE: SOA, A, TXT, NS, CNAME, MX, PTR, SRV, SPF, AAAA (Default CNAME)"
   echo "  HOST_TYPE: local-hostname, local-ipv4, public-ipv4, public-hostname (Default public-hostname)"
   echo "  TTL: Integer (Default 60)"
+  echo "  DNS_ENTRY: Required"
   echo "  ZONE_ID: Required"
   echo "Docs - http://docs.aws.amazon.com/cli/latest/reference/route53/change-resource-record-sets.html"
 }
@@ -17,7 +18,12 @@ run()
   TYPE=${TYPE:-"CNAME"}
   TTL=${TTL:-60}
 
-  if [ -z "$ZONE_ID" ]; then 
+  if [ -z "${ZONE_ID}" ]; then 
+    echo 'ZONE_ID must be set'; 
+    exit 1 
+  fi
+
+  if [ -z "${DNS_ENTRY}" ]; then 
     echo 'ZONE_ID must be set'; 
     exit 1 
   fi
@@ -30,7 +36,7 @@ run()
       {
         "Action": "UPSERT",
         "ResourceRecordSet": {
-          "Name": "${NAME}",
+          "Name": "${DNS_ENTRY}",
           "Type": "${TYPE}",
           "TTL": ${TTL},
           "ResourceRecords": [
