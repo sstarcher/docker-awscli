@@ -1,0 +1,23 @@
+usage(){
+  echo 
+  echo "Environment Variables"
+  echo "  EIP_ID: EIP Allocation Id (example eipalloc-xxxxxxxx) Required"
+  echo "Docs - http://docs.aws.amazon.com/cli/latest/reference/ec2/associate-address.html"
+}
+
+run(){
+  METADATA_URL='http://169.254.169.254/latest/meta-data/'
+  export AWS_DEFAULT_REGION=$(curl -s --fail http://169.254.169.254/latest/dynamic/instance-identity/document | awk -F\" '/region/ {print $4}')
+
+  if [ -z "$EIP_ID" ]; then 
+    echo 'EIP_ID must be set'; 
+    exit 1 
+  fi
+
+  INSTANCE=$(curl --fail ${METADATA_URL}instance-id 2> /dev/null)
+  aws ec2 associate-address --allocation-id ${EIP_ID} --instance-id ${INSTANCE}
+}
+
+"$@"
+
+
