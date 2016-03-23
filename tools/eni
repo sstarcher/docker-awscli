@@ -1,0 +1,46 @@
+usage(){
+  echo 
+  echo "Environment Variables"
+  echo "  ENI_NAME: EIP Name to query for (example XXXX) Required"
+  echo "  DEVICE_INDEX: Instance of the interface (Default 1)"
+  echo "Docs - http://docs.aws.amazon.com/cli/latest/reference/ec2/attach-network-interface.html"
+}
+
+run(){
+  METADATA_URL='http://169.254.169.254/latest/meta-data/'
+  export AWS_DEFAULT_REGION=$(curl -s --fail http://169.254.169.254/latest/dynamic/instance-identity/document | awk -F\" '/region/ {print $4}')
+  DEVICE_INDEX=${DEVICE_INDEX:-1}
+
+  if [ -z "$ENI_NAME" ]; then 
+    echo 'ENI_NAME must be set'; 
+    exit 1 
+  fi
+
+  INSTANCE=$(curl --fail ${METADATA_URL}instance-id 2> /dev/null)
+  AZ=$(curl --fail ${METADATA_URL}placement/availability-zone 2> /dev/null)
+  ENI=$(aws ec2 describe-network-interfaces \
+        --query 'NetworkInterfaces[?Status==`available`].[PrivateIpAddress,NetworkInterfaceId,AvailabilityZone]' \
+        --output text  --filters "Name=tag:Name,Values=${ENI_NAME}" \
+        | sort | grep $AZ | cut -f2 | head -n 1)
+  
+  if [ -z "$ENI" ]; then
+    echo "Failed to find any available ENIs in AZ ${AZ}"
+    exit 1
+  fi
+  
+  #Waiting to be in a running state
+  while state=$(aws ec2 describe-instance-status --instance-id $INSTANCE --output text --query "InstanceStatuses[].[InstanceState.Name]"); test "$state" != "running"; do
+    sleep 1; echo -n '.'
+  done; echo " $state"
+
+  aws ec2 attach-network-interface --network-interface-id $ENI --instance-id $INSTANCE --device-index $DEVICE_INDEX
+
+  #Waiting for attachment
+  while state=$(aws ec2 describe-network-interfaces --output text --query "NetworkInterfaces[?NetworkInterfaceId==\`$ENI\`].[Attachment.Status]"); test "$state" = "attaching"; do
+    sleep 1; echo -n '.'
+  done; echo " $state"
+}
+
+"$@"
+
+
