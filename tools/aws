@@ -1,0 +1,15 @@
+
+usage()
+{
+  echo 
+  echo "Docs - http://docs.aws.amazon.com/cli/latest/reference/"
+}
+
+run()
+{
+  /usr/bin/aws "$@"
+}
+
+"$@"
+
+

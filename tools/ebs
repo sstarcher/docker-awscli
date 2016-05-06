@@ -59,10 +59,8 @@ run(){
       echo "The volume is attached to instance ${ATTACHED_INSTANCE}"
       exit 1
     fi
-
   fi
 }
 
 "$@"
-
 

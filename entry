@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 set -ea
 
 if [ "$1" == "help" ]; then
@@ -12,8 +12,9 @@ else
     if [ "$1" == "help" ]; then
         echo "Usage for ${COMMAND}"
         . /usr/bin/tools/${COMMAND} usage
-    elif . /usr/bin/tools/${COMMAND} run; then
+    elif . /usr/bin/tools/${COMMAND} run "$@"; then
         echo 'Done'
+        exit 0
     else
         . /usr/bin/tools/${COMMAND} usage
     fi
